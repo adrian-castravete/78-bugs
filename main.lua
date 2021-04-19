@@ -14,9 +14,13 @@ fkge.c('2d', {
 	h = 8,
 })
 
+fkge.c('draw', '2d', {})
+
 fkge.c('hitbox', '2d', {
   c = {0, 0, 0},
 })
+
+fkge.c('bug', 'draw')
 
 fkge.c('input', {
 	mousePressed = 0,
@@ -34,31 +38,13 @@ fkge.s('hitbox', function (e)
 	lg.pop()
 end)
 
-fkge.c('spider', 'hitbox', {
+fkge.c('bug', 'draw', {
 	life = 1,
+	death = 0,
 })
 
-local function spawnHitBox(x, y, b)
-	local hb = fkge.e('spider').attr {
-		x = math.floor(x),
-		y = math.floor(y),
-	}
-	if b == 1 then
-		hb.c = {1, 0, 0}
-	elseif b == 2 then
-		hb.c = {0, 1, 0}
-	elseif b == 3 then
-		hb.c = {0, 0, 1}
-	elseif b == 4 then
-		hb.c = {1, 1, 1}
-	end
-	fkge.anim(hb, 'life', 0, 3, function(v)
-		hb.c[4] = 1 - v
-		if v == 1 then
-			hb.destroy = true
-		end
-		return v
-	end)
+local function spawnBug(x, y)
+	
 end
 
 fkge.s('input', function (e, evt, dt)
@@ -77,7 +63,7 @@ fkge.s('input', function (e, evt, dt)
 		for _, mr in ipairs(evt.mousemoved or {}) do
 			local b = e.mousePressed
 			local x, y, dx, dy = unpack(mr)
-			spawnHitBox(x, y, b)
+			spawnBug(x, y, b)
 		end
 	end
 	for _, g in ipairs(evt.joystickaxis or {}) do
@@ -97,7 +83,7 @@ fkge.s('input', function (e, evt, dt)
 		if e.gpy ~= 0 then
 			e.gy = (e.gy + e.gpy * dt * 32) % 160
 		end
-		spawnHitBox(e.gx, e.gy, 4)
+		spawnBug(e.gx, e.gy, 4)
 	end
 end)
 
