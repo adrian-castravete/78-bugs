@@ -14,13 +14,42 @@ fkge.c('2d', {
 	h = 8,
 })
 
-fkge.c('draw', '2d', {})
+fkge.c('draw', '2d', {
+	tick = 0,
+	sprite = nil,
+	quad = nil,
+	quadName = nil,
+})
 
 fkge.c('hitbox', '2d', {
   c = {0, 0, 0},
 })
 
-fkge.c('bug', 'draw')
+local function bugSprite()
+	local qg = {}
+
+	for i, n in ipairs {'w', 'nw', 'n', 'ne', 'e', 'se', 's', 'sw'} do
+		qg[n] = {
+			x = 16 * (i - 1),
+			y = 0,
+			w = 8,
+			h = 8,
+			c = 2,
+			n = 2,
+		}
+	end
+
+	return fkge.spr {
+		fileName = "assets/bugs.png",
+		quadGen = qg,
+	}
+end
+
+fkge.c('bug', 'draw', {
+	life = 1,
+	death = 0,
+	sprite = bugSprite(),
+})
 
 fkge.c('input', {
 	mousePressed = 0,
@@ -30,6 +59,34 @@ fkge.c('input', {
 	gpy = 0,
 })
 
+fkge.s('draw', function (e)
+	if not e.sprite then return end
+
+	e.tick = e.tick + 1
+
+	local w, h = e.w / 2, e.h / 2
+
+	lg.push()
+	lg.translate(e.x, e.y)
+	local quads = nil
+	if e.quadName and e.sprite.quads then
+		quads = e.sprite.quads[e.quadName]
+	elseif e.quad then
+		quads = e.quad
+		lg.draw(e.sprite.image, e.quad, -w, -h)
+	end
+	local quad = nil
+	if quads then
+		quad = quads[(math.floor(e.tick / 10) % #quads) + 1]
+	end
+	if quad then
+		lg.draw(e.sprite.image, quad, -w, -h)
+	else
+		lg.draw(e.sprite.image, -w, -h)
+	end
+	lg.pop()
+end)
+
 fkge.s('hitbox', function (e)
 	lg.push()
 	lg.translate(e.x, e.y)
@@ -38,13 +95,15 @@ fkge.s('hitbox', function (e)
 	lg.pop()
 end)
 
-fkge.c('bug', 'draw', {
-	life = 1,
-	death = 0,
-})
-
 local function spawnBug(x, y)
-	
+	local bug = fkge.e('bug').attr {
+		x = x,
+		y = y,
+		quadName = 'n',
+	}
+	fkge.anim(bug, 'life', 0, 5 * math.random(), nil, function (e)
+		e.destroy = true
+	end)
 end
 
 fkge.s('input', function (e, evt, dt)
