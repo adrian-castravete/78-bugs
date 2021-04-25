@@ -19,6 +19,7 @@ fkge.c('draw', '2d', {
 	sprite = nil,
 	quad = nil,
 	quadName = nil,
+	alpha = 1,
 })
 
 fkge.c('hitbox', '2d', {
@@ -47,7 +48,6 @@ end
 
 fkge.c('bug', 'draw', {
 	life = 1,
-	death = 0,
 	sprite = bugSprite(),
 })
 
@@ -67,7 +67,7 @@ fkge.s('draw', function (e)
 	local w, h = e.w / 2, e.h / 2
 
 	lg.push()
-	lg.translate(e.x, e.y)
+	lg.translate(math.floor(e.x), math.floor(e.y))
 	local quads = nil
 	if e.quadName and e.sprite.quads then
 		quads = e.sprite.quads[e.quadName]
@@ -79,6 +79,7 @@ fkge.s('draw', function (e)
 	if quads then
 		quad = quads[(math.floor(e.tick / 10) % #quads) + 1]
 	end
+	lg.setColor(1, 1, 1, e.alpha)
 	if quad then
 		lg.draw(e.sprite.image, quad, -w, -h)
 	else
@@ -95,14 +96,30 @@ fkge.s('hitbox', function (e)
 	lg.pop()
 end)
 
+local ox, oy = 120, 80
+local qs = {'nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'}
 local function spawnBug(x, y)
+	if math.random() > 0.1 then return end
+	local a = math.atan2(y - oy, x - ox)
+	local q = math.floor(4 * a / math.pi + 4.5)
+	if q < 1 then
+		q = 8
+	end
 	local bug = fkge.e('bug').attr {
 		x = x,
 		y = y,
-		quadName = 'n',
+		quadName = qs[q],
 	}
-	fkge.anim(bug, 'life', 0, 5 * math.random(), nil, function (e)
-		e.destroy = true
+	ox, oy = x, y
+	fkge.anim(bug, 'life', 0, 5 * math.random(), function (ov)
+		local v = (1 - ov)
+		bug.x = bug.x + math.cos(a) * v * 0.5
+		bug.y = bug.y + math.sin(a) * v * 0.5
+		return ov
+	end, function (e)
+		fkge.anim(bug, 'alpha', 0, 1, nil, function (e)
+			e.destroy = true
+		end)
 	end)
 end
 
